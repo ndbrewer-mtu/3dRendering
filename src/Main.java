@@ -8,7 +8,7 @@ import java.awt.image.BufferedImage;
 
 public class Main {
 
-    public enum Shape {Tetrahedron, Cube}
+    public enum Shape {Tetrahedron, Cube, Sphere}
 
     static boolean wireframe = true;
 
@@ -28,16 +28,20 @@ public class Main {
         pane.add(pitchSlider, BorderLayout.EAST);
 
         // Panel for buttons.
-        JPanel buttonPanel = new JPanel(new GridLayout(0,3,2,0));
+        JPanel buttonPanel = new JPanel(new GridLayout(0,4,2,0));
         buttonPanel.setBackground(Color.black);
 
         // The button to change the shape to Tetrahedron.
         JButton TetrahedronButton = new JButton("Tetrahedron");
         buttonPanel.add(TetrahedronButton);
 
+        // The button to change the shape to Sphere Approximation.
+        JButton sphereButton = new JButton("Sphere");
+        buttonPanel.add(sphereButton);
+
         // The button to change the shape to Cube.
-        JButton CubeButton = new JButton("Cube");
-        buttonPanel.add(CubeButton);
+        JButton cubeButton = new JButton("Cube");
+        buttonPanel.add(cubeButton);
 
         // The button to change the rendering mode to solid or back to wireframe.
         JButton wireframeButton = new JButton("Solid");
@@ -53,8 +57,12 @@ public class Main {
 
                 if(currentShape == Shape.Tetrahedron)
                     tris = createTetrahedronList();
+                else if(currentShape == Shape.Cube)
+                    tris = createCubeList();
+                else if (currentShape == Shape.Sphere)
+                    tris = createSphereList();
                 else
-                    tris = createTetrahedronList();
+                    tris = createEmptyList();
 
                 double heading = Math.toRadians(headingSlider.getValue());
                 Matrix3 transform = new Matrix3(new double[] {
@@ -115,19 +123,34 @@ public class Main {
                     zBuffer[q] = Double.NEGATIVE_INFINITY;
                 }
 
-                for(Triangle t :    tris){
-                    Vertex v1 = transform.transform(t.v1);
-                    Vertex v2 = transform.transform(t.v2);
-                    Vertex v3 = transform.transform(t.v3);
-                    
+                for(Triangle t : tris){
+
                     //have to manually translate since the image is not a Graphics2D object.
+                    Vertex v1 = transform.transform(t.v1);
                     v1.x += component.getWidth() / 2;
                     v1.y += component.getHeight() / 2;
+                    Vertex v2 = transform.transform(t.v2);
                     v2.x += component.getWidth() / 2;
                     v2.y += component.getHeight() / 2;
+                    Vertex v3 = transform.transform(t.v3);
                     v3.x += component.getWidth() / 2;
                     v3.y += component.getHeight() / 2;
 
+                    // normalize vertices to screen coordinates.
+                    Vertex ab = new Vertex(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z);
+                    Vertex ac = new Vertex(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z);
+                    Vertex norm = new Vertex(
+                         ab.y * ac.z - ab.z * ac.y,
+                         ab.z * ac.x - ab.x * ac.z,
+                         ab.x * ac.y - ab.y * ac.x
+                    );
+                    double normalLength = Math.sqrt(norm.x * norm.x + norm.y * norm.y + norm.z * norm.z);
+                    norm.z /= normalLength;
+                    norm.x /= normalLength;
+                    norm.y /= normalLength;
+
+                    double angleCos = Math.abs(norm.z);
+                    
                     // compute bounds for Triangle.
                     int minX = (int) Math.max(0,Math.ceil(Math.min(v1.x, Math.min(v2.x, v3.x))));
                     int maxX = (int) Math.min(img.getWidth() - 1, Math.floor(Math.max(v1.x, Math.max(v2.x, v3.x))));
@@ -146,7 +169,7 @@ public class Main {
                                 double depth = b1 * v1.z + b2 * v2.z + b3 * v3.z;
                                 int zIndex = y * img.getWidth() + x;
                                 if (zBuffer[zIndex] < depth) {
-                                    img.setRGB(x, y, t.color.getRGB());
+                                    img.setRGB(x, y, getShade(t.color,angleCos).getRGB());
                                     zBuffer[zIndex] = depth;
                                 }
                             }
@@ -163,6 +186,13 @@ public class Main {
         TetrahedronButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 currentShape = Shape.Tetrahedron;
+                renderPanel.repaint();
+            }
+        });
+
+        cubeButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                currentShape = Shape.Cube;
                 renderPanel.repaint();
             }
         });
@@ -184,6 +214,42 @@ public class Main {
         frame.setTitle("3D Rendering");
         frame.setVisible(true);
 
+    }
+
+    public static Color getShade(Color color, double shade){
+        double redLinear = Math.pow(color.getRed(), 2.4) * shade;
+        double greenLinear = Math.pow(color.getGreen(), 2.4) * shade;
+        double blueLinear = Math.pow(color.getBlue(), 2.4) * shade;
+
+        int red = (int) Math.pow(redLinear, 1/2.4);
+        int green = (int) Math.pow(greenLinear, 1/2.4);
+        int blue = (int) Math.pow(blueLinear, 1/2.4);
+
+        return new Color(red, green, blue);
+    }
+
+    public static ArrayList inflate(ArrayList<Triangle> tris) {
+        ArrayList<Triangle> result = new ArrayList<Triangle>();
+
+        for (Triangle t : tris) {
+            Vertex m1 = new Vertex((t.v1.x + t.v2.x)/2, (t.v1.y + t.v2.y)/2, (t.v1.z + t.v2.z)/2);
+            Vertex m2 = new Vertex((t.v2.x + t.v3.x)/2, (t.v2.y + t.v3.y)/2, (t.v2.z + t.v3.z)/2);
+            Vertex m3 = new Vertex((t.v1.x + t.v3.x)/2, (t.v1.y + t.v3.y)/2, (t.v1.z + t.v3.z)/2);
+
+            result.add(new Triangle(t.v1, m1, m3, t.color));
+            result.add(new Triangle(t.v2, m1, m2, t.color));
+            result.add(new Triangle(t.v3, m2, m3, t.color));
+            result.add(new Triangle(m1, m2, m3, t.color));
+        }
+        for (Triangle t : result) {
+            for (Vertex v : new Vertex[] { t.v1, t.v2, t.v3 }) {
+                double l = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z) / Math.sqrt(30000);
+                v.x /= l;
+                v.y /= l;
+                v.z /= l;
+            }
+        }
+        return result;
     }
 
     private static ArrayList createTetrahedronList(){
@@ -210,6 +276,17 @@ public class Main {
     private static ArrayList createCubeList(){
         ArrayList<Triangle> tris = new ArrayList<Triangle>();
         // todo: create a square
+        return tris;
+    }
+
+    private static ArrayList createSphereList(){
+        ArrayList<Triangle> tris = new ArrayList<Triangle>();
+        // todo: create a sphere
+        return tris;
+    }
+
+    private static ArrayList createEmptyList(){
+        ArrayList<Triangle> tris = new ArrayList<Triangle>();
         return tris;
     }
 
