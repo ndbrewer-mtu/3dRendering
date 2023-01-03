@@ -197,6 +197,13 @@ public class Main {
             }
         });
 
+        sphereButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                currentShape = Shape.Sphere;
+                renderPanel.repaint();
+            }
+        });
+
         wireframeButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 wireframe = !wireframe;
@@ -279,9 +286,13 @@ public class Main {
         return tris;
     }
 
+    private static int sphereDetail = 4;
+
     private static ArrayList createSphereList(){
         ArrayList<Triangle> tris = new ArrayList<Triangle>();
-        // todo: create a sphere
+        tris = createTetrahedronList();
+        for(int i = 0; i < sphereDetail; i++)
+            tris = inflate(tris);
         return tris;
     }
 
