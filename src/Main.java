@@ -14,10 +14,17 @@ public class Main {
 
     static Shape currentShape = Shape.Tetrahedron;
 
+    static JSlider detailSlider;
+
     public static void main(String[] args) {
         JFrame frame = new JFrame();
         Container pane = frame.getContentPane();
         pane.setLayout(new BorderLayout());
+
+        //slider for Detail
+        detailSlider = new JSlider(SwingConstants.VERTICAL,3, 10, 7);
+        detailSlider.setVisible(false);
+        pane.add(detailSlider, BorderLayout.WEST);
 
         // slider for horizontal rotation.
         JSlider headingSlider = new JSlider(0,360,180); // from 0° to 360° starting at 180°.
@@ -182,10 +189,12 @@ public class Main {
 
         headingSlider.addChangeListener(e -> renderPanel.repaint());
         pitchSlider.addChangeListener(e -> renderPanel.repaint());
+        detailSlider.addChangeListener(e -> renderPanel.repaint());
 
         TetrahedronButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 currentShape = Shape.Tetrahedron;
+                detailSlider.setVisible(false);
                 renderPanel.repaint();
             }
         });
@@ -193,6 +202,7 @@ public class Main {
         cubeButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 currentShape = Shape.Cube;
+                detailSlider.setVisible(false);
                 renderPanel.repaint();
             }
         });
@@ -200,6 +210,7 @@ public class Main {
         sphereButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 currentShape = Shape.Sphere;
+                detailSlider.setVisible(true);
                 renderPanel.repaint();
             }
         });
@@ -282,16 +293,19 @@ public class Main {
 
     private static ArrayList createCubeList(){
         ArrayList<Triangle> tris = new ArrayList<Triangle>();
-        //back
-        tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(100, -100, 100), new Vertex(-100,-100, 100), Color.RED));
-        tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(-100, 100, 100), new Vertex(-100,-100, 100), Color.RED));
+
         //front
         tris.add(new Triangle(new Vertex(100, 100, -100), new Vertex(100, -100, -100), new Vertex(-100,-100, -100), Color.GREEN));
         tris.add(new Triangle(new Vertex(100, 100, -100), new Vertex(-100, 100, -100), new Vertex(-100,-100, -100), Color.GREEN));
+        //back
+        tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(100, -100, 100), new Vertex(-100,-100, 100), Color.RED));
+        tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(-100, 100, 100), new Vertex(-100,-100, 100), Color.RED));
+        
         //right
         tris.add(new Triangle(new Vertex(-100, 100, 100), new Vertex(-100, -100, 100), new Vertex(-100,-100, -100), Color.BLUE));
         tris.add(new Triangle(new Vertex(-100, 100, 100), new Vertex(-100, 100, -100), new Vertex(-100,-100, -100), Color.BLUE));
         //left
+
         tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(100, -100, 100), new Vertex(100,-100, -100), Color.YELLOW));
         tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(100, 100, -100), new Vertex(100,-100, -100), Color.YELLOW));
         //bottom
@@ -300,15 +314,14 @@ public class Main {
         //top
         tris.add(new Triangle(new Vertex(100, -100, 100), new Vertex(100, -100, -100), new Vertex(-100,-100, -100), Color.CYAN));
         tris.add(new Triangle(new Vertex(100, -100, 100), new Vertex(-100, -100, 100), new Vertex(-100,-100, -100), Color.CYAN));
+
         return tris;
     }
 
-    private static int sphereDetail = 7;
-
     private static ArrayList createSphereList(){
         ArrayList<Triangle> tris = new ArrayList<Triangle>();
-        tris = createTetrahedronList();
-        for(int i = 0; i < sphereDetail; i++)
+        tris = createTetrahedronList(); // start with a tetrahedron
+        for(int i = 0; i < detailSlider.getValue(); i++) // inflate the tetrahedron to create a sphere using a detail level
             tris = inflate(tris);
         return tris;
     }
