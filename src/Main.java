@@ -282,11 +282,28 @@ public class Main {
 
     private static ArrayList createCubeList(){
         ArrayList<Triangle> tris = new ArrayList<Triangle>();
-        // todo: create a square
+        //back
+        tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(100, -100, 100), new Vertex(-100,-100, 100), Color.RED));
+        tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(-100, 100, 100), new Vertex(-100,-100, 100), Color.RED));
+        //front
+        tris.add(new Triangle(new Vertex(100, 100, -100), new Vertex(100, -100, -100), new Vertex(-100,-100, -100), Color.GREEN));
+        tris.add(new Triangle(new Vertex(100, 100, -100), new Vertex(-100, 100, -100), new Vertex(-100,-100, -100), Color.GREEN));
+        //right
+        tris.add(new Triangle(new Vertex(-100, 100, 100), new Vertex(-100, -100, 100), new Vertex(-100,-100, -100), Color.BLUE));
+        tris.add(new Triangle(new Vertex(-100, 100, 100), new Vertex(-100, 100, -100), new Vertex(-100,-100, -100), Color.BLUE));
+        //left
+        tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(100, -100, 100), new Vertex(100,-100, -100), Color.YELLOW));
+        tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(100, 100, -100), new Vertex(100,-100, -100), Color.YELLOW));
+        //bottom
+        tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(100, 100, -100), new Vertex(-100,100, -100), Color.WHITE));
+        tris.add(new Triangle(new Vertex(100, 100, 100), new Vertex(-100, 100, 100), new Vertex(-100,100, -100), Color.WHITE));
+        //top
+        tris.add(new Triangle(new Vertex(100, -100, 100), new Vertex(100, -100, -100), new Vertex(-100,-100, -100), Color.CYAN));
+        tris.add(new Triangle(new Vertex(100, -100, 100), new Vertex(-100, -100, 100), new Vertex(-100,-100, -100), Color.CYAN));
         return tris;
     }
 
-    private static int sphereDetail = 4;
+    private static int sphereDetail = 7;
 
     private static ArrayList createSphereList(){
         ArrayList<Triangle> tris = new ArrayList<Triangle>();
